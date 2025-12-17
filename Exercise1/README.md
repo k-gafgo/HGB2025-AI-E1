@@ -348,5 +348,5 @@ Port the SQL queries from exercise 1 to spark.
 
 ## Clean up
 ```bash
-docker compose down -d
+docker compose down
 ```
