@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 # CONFIGURATION
 # -------------------------
 NUM_ROWS = 1_000_000
-OUTPUT_FILE = "orders_1M.csv"
+OUTPUT_FILE = "../data/orders_1M.csv"
 SEED = 42  # fixed seed for reproducibility
 random.seed(SEED)
 
