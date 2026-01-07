@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import psycopg2
 from psycopg2 import extras
 # Connection config
-conn_params = "host=localhost port=5432 dbname=mydb user=postgres password=postgrespw"
+conn_params = "host=localhost port=5433 dbname=mydb user=postgres password=postgrespw"
 
 def setup_db():
     conn = psycopg2.connect(conn_params)

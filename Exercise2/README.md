@@ -19,8 +19,6 @@ Check if the **four containers** are running:
 ```bash
 docker exec -it postgres psql -U postgres
 ```
-
-
 # Kafka Quick Start (Docker)
 
 ## A. Check Kafka is running
@@ -335,7 +333,6 @@ Multiple consumer agents
 Near real-time streaming needed
 
 ## Part 1
-
 Describe which software architecture would be most appropriate for fetching the data from PostgreSQL and generate alerts in real-time. Explain the rationale behind your choice.
 
 ## Part 2
