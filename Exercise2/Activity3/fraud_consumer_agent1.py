@@ -4,6 +4,15 @@ import json
 import statistics
 
 # Configuration
+from kafka import KafkaConsumer
+
+consumer = KafkaConsumer('dbserver1.public.transactions',
+    bootstrap_servers="localhost:9094",
+    group_id='fraud-agent-1',
+    #auto_offset_reset="earliest",
+    value_deserializer=lambda v: json.loads(v.decode("utf-8"))
+)
+
 
 # In-memory store for user spending patterns
 user_spending_profiles = {} 
@@ -37,6 +46,7 @@ def analyze_pattern(data):
 print("🧬 Anomaly Detection Agent started...")
 
 for message in consumer: #consumer has to be implemented before!
+
     payload = message.value.get('payload', {})
     data = payload.get('after')
     

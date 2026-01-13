@@ -5,6 +5,14 @@ import time
 # Simulated In-Memory State for Velocity Checks.
 user_history = {} 
 
+from kafka import KafkaConsumer
+
+consumer = KafkaConsumer(
+    "dbserver1.public.transactions",
+    bootstrap_servers="localhost:9094",
+    group_id="fraud-agent-2",
+    value_deserializer=lambda v: json.loads(v.decode("utf-8"))
+)
 
 def analyze_fraud(transaction):
     user_id = transaction['user_id']
