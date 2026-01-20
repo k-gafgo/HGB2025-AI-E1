@@ -22,7 +22,7 @@ This shows the "Workers" doing the actual computation.
 While your application is running, try to answer these questions:
 1.  **The Bottleneck:** Which Stage has the longest "Duration"? What are the technical reasons for it?
 
-On the Stages Tab I ordered by Duration. The Stage with id 1 has the longest Duration with 24 s. This stage contains way more steps than those with shorter duration. While these have only 2 steps, namely Shuffled Row (Exchange) and Map Partitions (WholeStageCodegne), the Stage 1 also reads the state store, and saves the state alongside Shuffled Row and Map Partitions. 
+On the Stages Tab I ordered by Duration. The Stage with id 1 has the longest Duration with 24 s. This stage contains way more steps than those with shorter duration. While these have only 2 steps, namely Shuffled Row (Exchange) and Map Partitions (WholeStageCodegen), the Stage 1 also reads the state store, and saves the state alongside Shuffled Row and Map Partitions. 
 
 2.  **Resource Usage:** In the Executors tab, how much memory is currently being used versus the total capacity?
 
@@ -50,11 +50,6 @@ Review the starting configuration below. Identify which parameters are limiting 
 
 From the previous example of how to run the Spark application:
 
-```bash
-spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.0 --num-executors 2 --executor-cores 2 --executor-memory 3G --conf "spark.sql.shuffle.partitions=10" /opt/spark-apps/spark_structured_streaming_logs_processing.py  
-```
-
-
 ### Tuning Configurations (The "Knobs")
 You must decide how to adjust the configurations to increase the performance. Consider the relationship between your **CPU threads**, **RAM availability**, and **Parallelism**. Examples of configurations
 
@@ -75,11 +70,11 @@ See full configuration: https://spark.apache.org/docs/latest/submitting-applicat
 
 ### My Configuration
 
-To create multiple worker nodes, this command is necessary:
-```bash
-docker compose up --scale spark-worker=2
-```
+This is my configuration for Spark: 
 
+```bash
+spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.0 --num-executors 2 --executor-cores 2 --executor-memory 3G --conf "spark.sql.shuffle.partitions=2" /opt/spark-apps/spark_structured_streaming_logs_processing.py  
+```
 
 ### Monitoring 
 Navigate to the **Structured Streaming Tab** in the UI to monitor the performance:
@@ -87,8 +82,16 @@ Navigate to the **Structured Streaming Tab** in the UI to monitor the performanc
 ####  * **Input Rate vs. Process Rate:** 
 If your input rate is consistently higher than your process rate, your application is failing to keep up with the data stream.
 
+The input rate is slightly lower than the processing rate: 
+![input vs process rate](img/input_vs_process.png)
+
 #### The Executors Tab
 In the Executors Tab, check the **"Thread Dump"** and **"Task"** columns to verify resource utilization.
+
+There is not all memory being used: 
+![resource utilization](img/cmp_executors.png)
+
+Executor 1 is completing more tasks than executor 0 and also takes longer to do so. 
 
 #### The SQL/Queries Tab
 Click on the active query to see the **DAG (Directed Acyclic Graph)**.
@@ -96,12 +99,13 @@ Click on the active query to see the **DAG (Directed Acyclic Graph)**.
 * **Identify "Shuffle" Boundaries:** Look for the exchange points where data is redistributed across the cluster.
 
 In the DAG I see two times "Exchange": 
-* The first time before HashAggregate
-* the second time before Sorting
+1. The first time before HashAggregate
+2. the second time before Sorting
 
 * **Identify Data Skew:** Is data being distributed evenly across all your cores, or are a few tasks doing all the work? Use the DAG to pinpoint which specific transformation is causing a bottleneck.
 
-
+The data is not evenly distributed across all available cores. The reason for that is mainly the first exchange point that is mentioned above.
+Spark performs hashpartitioning with only 2 partitions. As a result, only two tasks can run in parallel after the exchange, leaving many executor cores idle and creating a performance bottleneck.
 
 * **Submit activities 1 and 2 (answers and evidences) via Moodle until 20.01.2026**
 
