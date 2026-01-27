@@ -118,6 +118,7 @@ Spark performs hashpartitioning with only 2 partitions. As a result, only two ta
 **When** a log entry has a `content` field containing the substring "crash"  
 **And** the `severity` value is either "High" or "Critical"  
 **And** logs are grouped by the `user_id` field, such as the crash count per `user_id`
+
 **And** the system aggregates these occurrences in **10-second intervals** based strictly on the event `timestamp` field  
 **Then** the system must output the aggregated results for each interval as they complete **When** the crash count of a given `user_id` is higher than 2 per interval.
 
@@ -148,20 +149,27 @@ Batch: 12
 * **Scalability:** The architecture must support horizontal scaling, allowing the logic to be distributed across a cluster of multiple machines.
 * **Fault Tolerance:** The system must support recovery in the event of infrastructure failure of the worker nodes.
 
+My code to achieve the following output, can be found in ```logs_processing/part3_spark_structured_streaming_logs_processing.py```
+This is the output of the first batch: 
+![output for the 1st batch](img/batch0.png)
+
+To achieve the grouping in 10 second intervals, it was vital to transform the timestamp column into the format that is needed to be able to use the ```window``` function of spark later on: 
+```python
+.withColumn("event_time", to_timestamp(col("timestamp") / 1000))
+```
+
+As in Activity 2, I decided to use 2 executors with 2 cores and 3 GB of memory each. Since I had troubles to get outputs at first, I decided to minimize the amount of responses, so I set ```TARGET_RPS=10000``` in the ```docker-compose.yaml``` of the load generator. 
+
+The architecture supports horizontal scaling, I am already in my solution spreading it across 2 executor nodes. By saving checkpoints during the spark session, the system is able to support recovery in the event of infrastructure failure of worker nodes. 
+
+When having a look at the Average Processing Speed and comparing that to the Average Input Speed, it is evident that my solution and configuration with 2 executors is not fast enough.
+![Processing comparison](img/ex3_input_vs_process.png)
+
+Comparing the amount of Tasks each Executor has finished and how long it took them to finish, it seems like the workload is split very equal between the two of them. Both do not need all the memory that I provided them with. 
+![workload comparison](img/workload.png)
+
+
+For my solution to also handle late-arriving records, I would need to add a Watermark to my Spark configuration file. 
+
 ## Deliverables for Activity 3
-
 You are required to submit your application source code accompanied by a technical discussion. This discussion must explain how your specific implementation satisfies the requirements, including a discussion on your solution could handle the scenario of late-arriving records that can appear after a 10-second interval has concluded. Furthermore, you must provide a performance and scalability report that evaluates the performance and efficiency of your solution and discuss its ability to execute effectively across a multi-machine environment. Submit via Moodle until 27.01.2026
-
-# Delete the topic where the log records were produced:
-```bash
-docker exec -it kafka kafka-topics.sh \
-  --bootstrap-server localhost:9092 \
-  --delete \
-  --topic logs 
-```
-
-
-## Clean up the ```load-generator``` folder under ```logs-processing```.
-```bash
-docker compose down -v
-```
