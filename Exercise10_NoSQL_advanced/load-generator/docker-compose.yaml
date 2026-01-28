@@ -7,7 +7,7 @@ services:
       - TARGET_RPS=50000
       - ADDITIONAL_TERM=crash
       - ADDITIONAL_TERM_RATE=1000
-      - MAX_RECORDS=5000000
+      - MAX_RECORDS=3000000
     deploy:
       replicas: 1 
       resources:
